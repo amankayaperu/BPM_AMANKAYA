@@ -112,6 +112,15 @@ main{max-width:1080px;margin:0 auto;padding:24px 16px 64px}
 .markbtn[disabled]{opacity:.45;cursor:not-allowed}
 .hint{font-size:14px;color:var(--muted);margin-top:6px}
 
+
+/* Final del manual */
+.finish{border-radius:6px;padding:22px 24px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.finish b{font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:.04em;text-transform:uppercase}
+.finish p{margin:0;max-width:56ch}
+.finish.pending{border:2px dashed var(--line);color:var(--muted)}
+.finish.ready{background:#0B0B0B;color:#F4F4F2}
+.finish.ready .btn{background:#F4F4F2;color:#0B0B0B;border-color:#F4F4F2;margin-top:6px}
+
 /* Botones */
 .btn{background:var(--accent);color:var(--accent-ink);border:2px solid var(--ink);border-radius:4px;padding:10px 20px;font-weight:700;cursor:pointer;font-size:17px}
 .btn:hover{filter:brightness(1.05)}
@@ -449,13 +458,19 @@ let io = null;
 try{ readSet = new Set(JSON.parse(store.get('bpm_read') || '[]')); }catch(e){}
 function saveRead(){ store.set('bpm_read', JSON.stringify([...readSet])); }
 
+function finishHtml(){
+  const left = SECTIONS.filter(s => !readSet.has(s.id)).length;
+  if(left) return `<div class="finish pending"><b>Aún no terminas el manual</b><p>Te faltan ${left} ${left === 1 ? 'sección' : 'secciones'} por marcar como leídas. Cuando termines, aquí aparecerá el botón para dar el examen.</p></div>`;
+  return `<div class="finish ready"><b>Terminaste de leer el manual</b><p>Ya puedes dar tu examen.</p><button class="btn" type="button" data-goexam>Dar el examen ahora</button></div>`;
+}
+
 function renderManual(){
   $('#sections').innerHTML = SECTIONS.map((s,i) => `
     <article class="sec" id="s-${s.id}">
       <h2><small>${String(i+1).padStart(2,'0')} de ${SECTIONS.length}</small>${esc(s.title)}</h2>
       ${s.html}
       <button class="markbtn" type="button" data-read="${s.id}" aria-pressed="${readSet.has(s.id)}" ${(readSet.has(s.id) || seen.has(s.id) || !('IntersectionObserver' in window)) ? '' : 'disabled'}>${readSet.has(s.id) ? 'Leída' : 'Marcar como leída'}</button>
-    </article>`).join('');
+    </article>`).join('') + finishHtml();
   $('#toc-list').innerHTML = SECTIONS.map(s => `
     <button type="button" data-go="${s.id}" class="${readSet.has(s.id) ? 'done' : ''}"><span>${esc(s.title)}</span><span class="tick" aria-hidden="true">✓</span></button>`).join('');
   const n = readSet.size;
@@ -470,6 +485,7 @@ function renderManual(){
   }
 }
 $('#sections').addEventListener('click', e => {
+  if(e.target.closest('[data-goexam]')){ showTab('examen'); window.scrollTo(0,0); return; }
   const b = e.target.closest('[data-read]'); if(!b) return;
   const id = b.dataset.read;
   readSet.has(id) ? readSet.delete(id) : readSet.add(id);
