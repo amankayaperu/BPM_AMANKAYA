@@ -122,6 +122,7 @@ main{max-width:1080px;margin:0 auto;padding:24px 16px 64px}
 .finish.ready .btn{background:#F4F4F2;color:#0B0B0B;border-color:#F4F4F2;margin-top:6px}
 
 /* Botones */
+a.btn{display:inline-block;text-decoration:none}
 .btn{background:var(--accent);color:var(--accent-ink);border:2px solid var(--ink);border-radius:4px;padding:10px 20px;font-weight:700;cursor:pointer;font-size:17px}
 .btn:hover{filter:brightness(1.05)}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
@@ -625,6 +626,15 @@ function parseCode(code){
     return {code: parts.join('.'), rec:{name:o.n.slice(0,60), area:o.a, score:o.s, total:o.t, pct, passed:pct >= PASS, wrong:Array.isArray(o.w) ? o.w.filter(Number.isInteger) : [], ts:Number(o.ts) || 0}};
   }catch(e){ return null; }
 }
+const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSc9rQ80odvGOiGPEw8A_TaC5DK_gxfUufp6FXkFtzbRGVUQew/viewform';
+const FORM_EXAMEN = 'Manual de BPM';
+function formLink(){
+  const r = ex.result, d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  const fecha = p(d.getDate()) + '/' + p(d.getMonth()+1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  const q = {'entry.1639169868':FORM_EXAMEN,'entry.2029367015':ex.name,'entry.1602760953':ex.area,'entry.509954733':r.pct + '%','entry.1494143065':r.score + '/' + r.total,'entry.508762832':fecha};
+  return FORM_URL + '?usp=pp_url&' + Object.keys(q).map(k => k + '=' + encodeURIComponent(q[k])).join('&');
+}
 function fillCodeBox(){
   const box = $('#code-box'); if(!box || !ex.code) return;
   box.innerHTML = `
@@ -684,6 +694,9 @@ function renderResult(root){
       <span class="status ${r.passed?'ok':'bad'}">${r.passed ? 'Aprobado' : 'No aprobado'}</span></div></div>
     <p class="note">${r.passed ? 'Superaste la nota mínima de ' + PASS + '%.' : 'La nota mínima es ' + PASS + '%. Repasa las secciones indicadas abajo e inténtalo de nuevo.'}</p>
     <p class="note" id="save-msg" role="status">${esc(ex.saveMsg)}</p>
+    <div class="codebox"><b>Envía tu resultado a gerencia</b>
+      <p class="note">Pulsa el botón y, en la página que se abre, presiona <b>Enviar</b>. Tus datos ya vienen escritos. Sin este paso tu examen no queda registrado.</p>
+      <a class="btn" href="${esc(formLink())}" target="_blank" rel="noopener">Enviar mi resultado</a></div>
     <div id="code-box"></div>
     <div class="row" style="margin:14px 0 4px">
       <button class="btn" id="retry" type="button">Volver a intentar</button>
